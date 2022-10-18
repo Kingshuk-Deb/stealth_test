@@ -75,9 +75,11 @@ const login = async (req: any, res: Response) => {
   });
   if (response.success) {
     const user = response.user;
-    const { accessToken } = getTokens(user);
+    const { accessToken, refreshToken } = getTokens(user);
     const { accessTokenJWT } = accessToken;
+    const { refreshTokenJWT } = refreshToken;
     res.set('accessTokenJWT', accessTokenJWT);
+    res.set('refreshTokenJWT', refreshTokenJWT);
     return res.status(200).json({
       success: response.success,
       user

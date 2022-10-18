@@ -1,10 +1,12 @@
 import express from 'express';
 import { PORT } from './config';
 import { router as userRouter } from './user/route';
+import { router as movieRouter } from './movie/route';
 import cors from 'cors';
 import morgan from 'morgan';
 import compression from 'compression';
 import { notFoundMiddleware } from './middlewares/not-found';
+import { authenticateUser } from './middlewares/authentication';
 
 const app = express();
 
@@ -34,6 +36,7 @@ async function initRouter() {
     res.send('OK');
   });
   app.use('/user', userRouter);
+  app.use('/movie', authenticateUser, movieRouter);
   app.use(notFoundMiddleware);
 }
 
