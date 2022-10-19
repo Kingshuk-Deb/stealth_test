@@ -35,7 +35,7 @@ function ModalForMovieEntry({ isFor, name, rating, cast, genre, date }) {
       <Flex>
         <Button
           background={isFor && isFor === 'edit' ? 'blue.500' : 'gray.100'}
-          color={isFor && isFor === 'edit' ? 'white' : 'green.700'}
+          color={isFor && isFor === 'edit' ? 'gray.900' : 'green.700'}
           onClick={onOpen}
           ref={finalRef}
         >
