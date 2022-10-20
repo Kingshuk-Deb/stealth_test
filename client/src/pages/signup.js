@@ -20,7 +20,7 @@ const Signup = () => {
         width={350}
       >
         <Heading paddingBottom={6}>Sign Up</Heading>
-        <FormikExample />
+        <FormikExample isFor={'signup'} />
         <Flex direction={'row'} pt={2}>
           <Text fontSize={'small'} pr={1}>
             Already have an account?

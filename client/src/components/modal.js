@@ -17,18 +17,165 @@ import {
   NumberInputField,
   NumberInputStepper,
   Text,
-  useDisclosure
+  useDisclosure,
+  useToast
 } from '@chakra-ui/react';
 
 import { AddIcon, EditIcon } from '@chakra-ui/icons';
 import { useRef, useState } from 'react';
+import axios from 'axios';
+import { AuthState } from '../context/accessToken';
 
-function ModalForMovieEntry({ isFor, name, rating, cast, genre, date }) {
+function ModalForMovieEntry({
+  isFor,
+  id,
+  name,
+  rating,
+  cast,
+  genre,
+  date,
+  handleAddition,
+  handleEdit
+}) {
+  const { accessToken } = AuthState();
+
+  
+  const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  
   const [isLodaing, setIsLodaing] = useState(false);
+  const [movieName, setMovieName] = useState(name || '');
+  const [movierating, setMovierating] = useState(
+    parseFloat(rating).toFixed(1) || 7.5
+  );
+  const [moviecast, setMoviecast] = useState(cast || '');
+  const [moviegenre, setMoviegenre] = useState(genre || '');
+  const [moviedate, setMoviedate] = useState(date || dateFormat(new Date()));
 
   const initialRef = useRef(null);
   const finalRef = useRef(null);
+
+  function dateFormat(date) {
+    let monthString = '',
+      dayString = '';
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    if (month < 10) {
+      monthString = `0${month}`;
+    } else {
+      monthString = `${month}`;
+    }
+    if (day < 10) {
+      dayString = `0${day}`;
+    } else {
+      dayString = `${day}`;
+    }
+    return `${year}-${monthString}-${dayString}`;
+  }
+
+  async function addNewMovie() {
+    const castArray = moviecast.split(',');
+    const releaseDate = new Date(moviedate);
+    const headersList = {
+      Accept: '*/*',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    };
+
+    const bodyContent = JSON.stringify({
+      name: movieName,
+      rating: movierating.toString(),
+      cast: castArray,
+      genre: moviegenre,
+      releaseDate: releaseDate
+    });
+
+    const reqOptions = {
+      url: 'http://localhost:8080/movie',
+      method: 'POST',
+      headers: headersList,
+      data: bodyContent
+    };
+    try {
+      const response = await axios.request(reqOptions);
+      if (response.data.success) {
+        const newMovie = {
+          id: response.data.movie.id,
+          name: response.data.movie.name,
+          rating: response.data.movie.rating,
+          cast: response.data.movie.cast,
+          genre: response.data.movie.genre,
+          releaseDate: dateFormat(new Date(response.data.movie.releaseDate))
+        };
+        handleAddition(newMovie);
+        setIsLodaing(false);
+        onClose();
+      }
+    } catch (err) {
+      const error = err.response.data.error || err.message;
+      toast({
+        title: error,
+        status: 'error',
+        isClosable: true,
+        position: 'bottom-right'
+      });
+      setIsLodaing(false);
+    }
+  }
+
+  async function editMovie() {
+    const castArray = Array.isArray(moviecast)
+      ? moviecast
+      : moviecast.split(',');
+    const releaseDate = new Date(moviedate);
+    const headersList = {
+      Accept: '*/*',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    };
+
+    const bodyContent = JSON.stringify({
+      movieId: id,
+      name: movieName,
+      rating: movierating.toString(),
+      cast: castArray,
+      genre: moviegenre,
+      releaseDate: releaseDate
+    });
+
+    const reqOptions = {
+      url: 'http://localhost:8080/movie',
+      method: 'PATCH',
+      headers: headersList,
+      data: bodyContent
+    };
+    try {
+      const response = await axios.request(reqOptions);
+      if (response.data.success) {
+        const newMovie = {
+          id: response.data.movie.id,
+          name: response.data.movie.name,
+          rating: response.data.movie.rating,
+          cast: response.data.movie.cast,
+          genre: response.data.movie.genre,
+          releaseDate: dateFormat(new Date(response.data.movie.releaseDate))
+        };
+        handleEdit(newMovie);
+        setIsLodaing(false);
+        onClose();
+      }
+    } catch (err) {
+      const error = err.response.data.error || err.message;
+      toast({
+        title: error,
+        status: 'error',
+        isClosable: true,
+        position: 'bottom-right'
+      });
+      setIsLodaing(false);
+    }
+  }
 
   return (
     <>
@@ -63,20 +210,26 @@ function ModalForMovieEntry({ isFor, name, rating, cast, genre, date }) {
             <FormControl>
               <FormLabel>Movie name</FormLabel>
               <Input
-                value={name || ''}
+                value={movieName || ''}
                 ref={initialRef}
                 placeholder="Movie name"
+                onChange={(e) => {
+                  setMovieName(e.target.value);
+                }}
               />
             </FormControl>
 
             <FormControl mt={4}>
               <FormLabel>Rating</FormLabel>
               <NumberInput
-                defaultValue={rating || 7.5}
+                defaultValue={movierating || 7.5}
                 precision={1}
                 step={0.1}
                 min={0.0}
                 max={10.0}
+                onChange={(e) => {
+                  setMovierating(e);
+                }}
               >
                 <NumberInputField />
                 <NumberInputStepper>
@@ -88,20 +241,35 @@ function ModalForMovieEntry({ isFor, name, rating, cast, genre, date }) {
 
             <FormControl mt={4}>
               <FormLabel>Cast</FormLabel>
-              <Input value={cast || ''} placeholder="Cast" />
+              <Input
+                value={moviecast || ''}
+                placeholder="Cast"
+                onChange={(e) => {
+                  setMoviecast(e.target.value);
+                }}
+              />
             </FormControl>
 
             <FormControl mt={4}>
               <FormLabel>Genre</FormLabel>
-              <Input value={genre || ''} placeholder="Genre" />
+              <Input
+                value={moviegenre || ''}
+                placeholder="Genre"
+                onChange={(e) => {
+                  setMoviegenre(e.target.value);
+                }}
+              />
             </FormControl>
 
             <FormControl mt={4}>
               <FormLabel>Release Date</FormLabel>
               <Input
-                value={date || ''}
+                value={moviedate || ''}
                 placeholder="Release Date"
                 type="date"
+                onChange={(e) => {
+                  setMoviedate(e.target.value);
+                }}
               />
             </FormControl>
           </ModalBody>
@@ -112,13 +280,13 @@ function ModalForMovieEntry({ isFor, name, rating, cast, genre, date }) {
               colorScheme="teal"
               isLoading={isLodaing}
               type="submit"
-              onClick={() => {
+              onClick={async () => {
                 setIsLodaing(true);
-                // Validate input functions
-                setTimeout(() => {
-                  setIsLodaing(false);
-                  onClose();
-                }, 1000);
+                if (isFor === 'edit') {
+                  editMovie();
+                } else {
+                  addNewMovie();
+                }
               }}
             >
               Save

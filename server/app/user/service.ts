@@ -15,10 +15,6 @@ const getAccessToken = async (req: any, res: Response) => {
       { payload: { user, type: 'accessToken' } },
       '1d'
     );
-    const accessToken = {
-      accessTokenJWT,
-      expiresIn: 1000 * 60 * 60 * 24 // 24 hrs!
-    };
     res.status(200).json({ accessToken: accessTokenJWT, success: true });
   } catch (err) {
     const error = err.msg || err;
@@ -51,10 +47,12 @@ const register = async (req: any, res: Response) => {
     const { accessToken, refreshToken } = getTokens(user);
     const { accessTokenJWT } = accessToken;
     const { refreshTokenJWT } = refreshToken;
-    res.set('accessTokenJWT', accessTokenJWT);
-    res.set('refreshTokenJWT', refreshTokenJWT);
     return res.status(200).json({
       success: response.success,
+      tokens: {
+        accessToken: accessTokenJWT,
+        refreshToken: refreshTokenJWT
+      },
       user
     });
   }
@@ -78,10 +76,12 @@ const login = async (req: any, res: Response) => {
     const { accessToken, refreshToken } = getTokens(user);
     const { accessTokenJWT } = accessToken;
     const { refreshTokenJWT } = refreshToken;
-    res.set('accessTokenJWT', accessTokenJWT);
-    res.set('refreshTokenJWT', refreshTokenJWT);
     return res.status(200).json({
       success: response.success,
+      tokens: {
+        accessToken: accessTokenJWT,
+        refreshToken: refreshTokenJWT
+      },
       user
     });
   }

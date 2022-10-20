@@ -12,8 +12,14 @@ import {
 } from '@chakra-ui/react';
 import { useState } from 'react';
 
-function FormikExample() {
+import axios from 'axios';
+import { useToast } from '@chakra-ui/react';
+
+function FormikExample({ isFor }) {
   const [show, setShow] = useState(false);
+  
+  const toast = useToast();
+  
   const handleClick = () => setShow(!show);
 
   function validateEmail(value) {
@@ -32,14 +38,84 @@ function FormikExample() {
     return error;
   }
 
+  async function signInUser({ email, password }) {
+    const headersList = {
+      Accept: '*/*',
+      'Content-Type': 'application/json; charset=utf-8'
+    };
+
+    const bodyContent = JSON.stringify({
+      email: email,
+      password: password
+    });
+
+    const reqOptions = {
+      url: 'http://localhost:8080/user/login',
+      method: 'POST',
+      headers: headersList,
+      data: bodyContent
+    };
+    try {
+      const response = await axios.request(reqOptions);
+      if (response.data.success) {
+        localStorage.setItem('refreshToken', response.data.tokens.refreshToken);
+        window.location.replace('/');
+      }
+    } catch (err) {
+      const error = err.response.data.error || err.message;
+      toast({
+        title: error,
+        status: 'error',
+        isClosable: true,
+        position: 'bottom-right'
+      });
+    }
+  }
+
+  async function signUpUser({ email, password }) {
+    const headersList = {
+      Accept: '*/*',
+      'Content-Type': 'application/json; charset=utf-8'
+    };
+
+    const bodyContent = JSON.stringify({
+      email: email,
+      password: password
+    });
+
+    const reqOptions = {
+      url: 'http://localhost:8080/user/register',
+      method: 'POST',
+      headers: headersList,
+      data: bodyContent
+    };
+    try {
+      const response = await axios.request(reqOptions);
+      if (response.data.success) {
+        localStorage.setItem('refreshToken', response.data.tokens.refreshToken);
+        window.location.replace('/');
+      }
+    } catch (err) {
+      const error = err.response.data.error || err.message;
+      toast({
+        title: error,
+        status: 'error',
+        isClosable: true,
+        position: 'bottom-right'
+      });
+    }
+  }
+
   return (
     <Formik
-      initialValues={{ email: 'name@mail.com' }}
-      onSubmit={(values, actions) => {
-        setTimeout(() => {
-          alert(JSON.stringify(values, null, 2));
-          actions.setSubmitting(false);
-        }, 1000);
+      initialValues={{ email: '', password: '' }}
+      onSubmit={async (values, actions) => {
+        if (isFor === 'signin') {
+          await signInUser(values);
+        } else if (isFor === 'signup') {
+          await signUpUser(values);
+        }
+        actions.setSubmitting(false);
       }}
     >
       {(props) => (
@@ -49,17 +125,7 @@ function FormikExample() {
               <FormControl isInvalid={form.errors.email && form.touched.email}>
                 <FormLabel paddingBottom={2}>Email</FormLabel>
                 <Input {...field} placeholder="name@mail.com" />
-                {form.errors.email ? (
-                  form.errors.email.split(',').map((error, i) => (
-                    <FormErrorMessage key={i} fontSize={'xs'}>
-                      {error}
-                    </FormErrorMessage>
-                  ))
-                ) : (
-                  <FormErrorMessage fontSize={'xs'}>
-                    {form.errors.email}
-                  </FormErrorMessage>
-                )}
+                <FormErrorMessage>{form.errors.email}</FormErrorMessage>
               </FormControl>
             )}
           </Field>
@@ -73,6 +139,7 @@ function FormikExample() {
                 </FormLabel>
                 <InputGroup>
                   <Input
+                    {...field}
                     pr="4.5rem"
                     type={show ? 'text' : 'password'}
                     placeholder="Enter password"
@@ -83,17 +150,7 @@ function FormikExample() {
                     </Button>
                   </InputRightElement>
                 </InputGroup>
-                {form.errors.password ? (
-                  form.errors.password.split(',').map((error, i) => (
-                    <FormErrorMessage key={i} fontSize={'xs'}>
-                      {error}
-                    </FormErrorMessage>
-                  ))
-                ) : (
-                  <FormErrorMessage fontSize={'xs'}>
-                    {form.errors.password}
-                  </FormErrorMessage>
-                )}
+                <FormErrorMessage>{form.errors.password}</FormErrorMessage>
               </FormControl>
             )}
           </Field>

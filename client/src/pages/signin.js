@@ -20,7 +20,7 @@ const SignIn = () => {
         width={350}
       >
         <Heading paddingBottom={6}>Sign In</Heading>
-        <FormikExample />
+        <FormikExample isFor={'signin'} />
         <Flex direction={'row'} pt={2}>
           <Text fontSize={'small'} pr={1}>
             Don't have an account?

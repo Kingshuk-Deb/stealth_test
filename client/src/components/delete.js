@@ -7,13 +7,60 @@ import {
   AlertDialogHeader,
   AlertDialogOverlay,
   Button,
-  useDisclosure
+  useDisclosure,
+  useToast
 } from '@chakra-ui/react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import axios from 'axios';
+import { AuthState } from '../context/accessToken';
 
-function AlertDialogMovie() {
+function AlertDialogMovie({ id, handleDelete }) {
+  const { accessToken } = AuthState();
+
+  const [isLoading, setIsLodaing] = useState(false);
+  
   const { isOpen, onOpen, onClose } = useDisclosure();
+  
   const cancelRef = useRef();
+  
+  const toast = useToast();
+
+  async function handleClick() {
+    const headersList = {
+      Accept: '*/*',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    };
+
+    const bodyContent = JSON.stringify({
+      movieId: id
+    });
+
+    const reqOptions = {
+      url: 'http://localhost:8080/movie',
+      method: 'DELETE',
+      headers: headersList,
+      data: bodyContent
+    };
+
+    try {
+      const response = await axios.request(reqOptions);
+      if (response.data.success) {
+        handleDelete(response.data.movie.id);
+        setIsLodaing(false);
+        onClose();
+      }
+    } catch (err) {
+      const error = err.response.data.error || err.message;
+      toast({
+        title: error,
+        status: 'error',
+        isClosable: true,
+        position: 'bottom-right'
+      });
+      setIsLodaing(false);
+    }
+  }
 
   return (
     <>
@@ -37,7 +84,15 @@ function AlertDialogMovie() {
               <Button ref={cancelRef} onClick={onClose}>
                 Cancel
               </Button>
-              <Button colorScheme="red" onClick={onClose} ml={3}>
+              <Button
+                isLoading={isLoading}
+                colorScheme="red"
+                onClick={async () => {
+                  setIsLodaing(true);
+                  await handleClick();
+                }}
+                ml={3}
+              >
                 Delete
               </Button>
             </AlertDialogFooter>

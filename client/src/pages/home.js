@@ -10,26 +10,110 @@ import {
   Text,
   Th,
   Thead,
-  Tr
+  Tr,
+  useToast
 } from '@chakra-ui/react';
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import AlertDialogMovie from '../components/delete';
 import ModalForMovieEntry from '../components/modal';
 import logo from '../logo.png';
-
-const movies = [
-  {
-    id: 1,
-    name: 'The Shawshank Redemption',
-    rating: '9.3',
-    cast: ['Tim Robbins', 'Morgan Freeman', 'Bob Gunton'],
-    genre: 'Drama',
-    releaseDate: '2nd Dec 1996'
-  }
-];
+import axios from 'axios';
+import { AuthState } from '../context/accessToken';
 
 const Home = () => {
+  const { accessToken } = AuthState();
+  
+  const toast = useToast();
+  
+  const [movies, setMovies] = useState([]);
+
+  function dateFormat(date) {
+    let monthString = '',
+      dayString = '';
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    if (month < 10) {
+      monthString = `0${month}`;
+    } else {
+      monthString = `${month}`;
+    }
+    if (day < 10) {
+      dayString = `0${day}`;
+    } else {
+      dayString = `${day}`;
+    }
+    return `${year}-${monthString}-${dayString}`;
+  }
+
+  async function fetchMovies() {
+    const headersList = {
+      Accept: '*/*',
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    };
+
+    const reqOptions = {
+      url: 'http://localhost:8080/user',
+      method: 'GET',
+      headers: headersList
+    };
+
+    try {
+      const response = await axios.request(reqOptions);
+      if (response.data.success) {
+        const allMovies = response.data.user.movies.map((movie) => {
+          return {
+            id: movie.id,
+            name: movie.name,
+            rating: movie.rating,
+            cast: movie.cast,
+            genre: movie.genre,
+            releaseDate: dateFormat(new Date(movie.releaseDate))
+          };
+        });
+        setMovies(allMovies);
+      }
+    } catch (err) {
+      const error = err.response.data.error || err.message;
+      toast({
+        title: error,
+        status: 'error',
+        isClosable: true,
+        position: 'bottom-right'
+      });
+    }
+  }
+  useEffect(() => {
+    fetchMovies();
+    // eslint-disable-next-line
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.replace('/login');
+  };
+
+  const handleAddition = (data) => {
+    setMovies([...movies, data]);
+  };
+
+  const handleEdit = (data) => {
+    setMovies(
+      movies.map((movie) => {
+        if (movie.id === data.id) {
+          return data;
+        } else {
+          return movie;
+        }
+      })
+    );
+  };
+
+  const handleDelete = (id) => {
+    setMovies(movies.filter((movie) => movie.id !== id));
+  };
+
   return (
     <Flex direction={'column'}>
       <Flex
@@ -47,8 +131,9 @@ const Home = () => {
           mr={'8vw'}
           background={'gray.500'}
           color={'gray.900'}
+          onClick={handleLogout}
         >
-          <Link to="/login">Sign Out</Link>
+          Sign Out
         </Button>
       </Flex>
       <Flex
@@ -60,7 +145,7 @@ const Home = () => {
         <TableContainer background={'green.300'} rounded={6}>
           <Table variant="simple">
             <TableCaption>
-              <ModalForMovieEntry />
+              <ModalForMovieEntry handleAddition={handleAddition} />
             </TableCaption>
             <Thead>
               <Tr>
@@ -100,14 +185,19 @@ const Home = () => {
                       <ModalForMovieEntry
                         isFor={'edit'}
                         name={movie.name}
+                        id={movie.id}
                         rating={movie.rating}
                         cast={movie.cast}
                         genre={movie.genre}
                         date={movie.releaseDate}
+                        handleEdit={handleEdit}
                       />
                     </Td>
                     <Td>
-                      <AlertDialogMovie />
+                      <AlertDialogMovie
+                        id={movie.id}
+                        handleDelete={handleDelete}
+                      />
                     </Td>
                   </Tr>
                 </>

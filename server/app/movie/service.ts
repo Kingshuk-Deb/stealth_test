@@ -48,7 +48,6 @@ const updateMovie = async (req: any, res: Response) => {
   if (!req.user) {
     return createAPIError(400, 'Error accessing data!', res);
   }
-  const updateData = {};
   const { movieId, name, rating, cast, genre, releaseDate } = req.body;
   if (!movieId) {
     return createAPIError(
@@ -57,22 +56,32 @@ const updateMovie = async (req: any, res: Response) => {
       res
     );
   }
-  if (name) {
-    updateData['name'] = name;
+  if (!name) {
+    return createAPIError(400, `Please provide the name of the movie!`, res);
   }
-  if (rating) {
-    updateData['rating'] = rating;
+  if (!rating) {
+    return createAPIError(400, `Please provide the rating of the movie!`, res);
   }
-  if (cast) {
-    updateData['cast'] = cast;
+  if (!cast) {
+    return createAPIError(400, `Please provide the cast of the movie!`, res);
   }
-  if (genre) {
-    updateData['genre'] = genre;
+  if (!genre) {
+    return createAPIError(400, `Please provide the genre of the movie!`, res);
   }
-  if (releaseDate) {
-    updateData['releaseDate'] = releaseDate;
+  if (!releaseDate) {
+    return createAPIError(
+      400,
+      `Please provide the releaseDate of the movie!`,
+      res
+    );
   }
-  const response = await Movie.updateData(movieId, updateData);
+  const response = await Movie.updateData(movieId, {
+    name,
+    rating,
+    cast,
+    genre,
+    releaseDate
+  });
   if (response.success) {
     return res.status(200).json({
       success: response.success,
