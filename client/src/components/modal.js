@@ -39,10 +39,9 @@ function ModalForMovieEntry({
 }) {
   const { accessToken } = AuthState();
 
-  
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  
+
   const [isLodaing, setIsLodaing] = useState(false);
   const [movieName, setMovieName] = useState(name || '');
   const [movierating, setMovierating] = useState(
@@ -111,6 +110,11 @@ function ModalForMovieEntry({
         handleAddition(newMovie);
         setIsLodaing(false);
         onClose();
+        setMovieName('');
+        setMovierating(0);
+        setMoviecast('');
+        setMoviegenre('');
+        setMoviedate(dateFormat(new Date()));
       }
     } catch (err) {
       const error = err.response.data.error || err.message;
