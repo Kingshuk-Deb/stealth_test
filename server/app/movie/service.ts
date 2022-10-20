@@ -14,7 +14,7 @@ const createMovie = async (req: any, res: Response) => {
   if (!rating) {
     return createAPIError(400, `Please provide the rating of the movie!`, res);
   }
-  if (!cast) {
+  if (!cast || cast.length === 0 || cast[0].length === 0) {
     return createAPIError(400, `Please provide the cast of the movie!`, res);
   }
   if (!genre) {
@@ -62,7 +62,7 @@ const updateMovie = async (req: any, res: Response) => {
   if (!rating) {
     return createAPIError(400, `Please provide the rating of the movie!`, res);
   }
-  if (!cast) {
+  if (!cast || cast.length === 0 || cast[0].length === 0) {
     return createAPIError(400, `Please provide the cast of the movie!`, res);
   }
   if (!genre) {
